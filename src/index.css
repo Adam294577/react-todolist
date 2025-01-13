@@ -1,0 +1,19 @@
+.listBox {
+  --sb-track-color: #00000000;
+  --sb-thumb-color: #ccd4f2;
+  --sb-size: 7px;
+}
+
+.listBox::-webkit-scrollbar {
+  width: var(--sb-size);
+}
+
+.listBox::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+  border-radius: 5px;
+}
+
+.listBox::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+  border-radius: 5px;
+}
