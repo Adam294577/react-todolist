@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import CustomCheckbox from './components/CustomCheckbox';
 import CancelSvg from './components/CancelSvg';
 
@@ -7,13 +7,98 @@ function App() {
   const [barRange, setBarRange] = useState(50);
   const [isOpen, setIsOpen] = useState(false);
   const [todos, setTodos] = useState([
-    { id: 1, text: 'Learn React', completed: true },
-    { id: 2, text: 'Learn Vue', completed: true },
-    { id: 3, text: 'Learn Angular', completed: false },
-    { id: 4, text: 'Learn Svelte', completed: false },
-    { id: 5, text: 'Learn Next', completed: false },
-    { id: 6, text: 'Learn Nuxt', completed: true },
+    {
+      id: 1,
+      text: 'Learn React',
+      canceled: false,
+      completed: true,
+      createtime: '2025-01-01T00:00:00',
+    },
+    {
+      id: 2,
+      text: 'Learn Vue',
+      canceled: false,
+      completed: true,
+      createtime: '2025-01-01T00:00:01',
+    },
+    {
+      id: 3,
+      text: 'Learn Angular',
+      canceled: false,
+      completed: false,
+      createtime: '2025-01-01T00:00:02',
+    },
+    {
+      id: 4,
+      text: 'Learn Svelte',
+      canceled: false,
+      completed: false,
+      createtime: '2025-01-01T00:00:03',
+    },
+    {
+      id: 5,
+      text: 'Learn Next',
+      canceled: false,
+      completed: false,
+      createtime: '2025-01-01T00:00:04',
+    },
+    {
+      id: 6,
+      text: 'Learn Nuxt',
+      canceled: false,
+      completed: true,
+      createtime: '2025-01-01T00:00:05',
+    },
   ]);
+  const [inputValue, setInputValue] = useState('');
+  const listBoxRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const completedCount = todos.filter(
+      (todo) => !todo.canceled && todo.completed
+    ).length;
+    const activeCount = todos.filter((todo) => !todo.canceled).length;
+    const percentage =
+      activeCount === 0 ? 0 : Math.ceil((completedCount / activeCount) * 100);
+    setBarRange(percentage);
+  }, [todos]);
+
+  const handleAddTodo = () => {
+    if (!inputValue.trim()) return;
+
+    const newTodo = {
+      id: todos.length + 1,
+      text: inputValue,
+      canceled: false,
+      completed: false,
+      createtime: new Date().toISOString(),
+    };
+    console.log('newTodo', newTodo);
+
+    setTodos([...todos, newTodo]);
+    setInputValue('');
+
+    setTimeout(() => {
+      listBoxRef.current?.scrollTo({
+        top: listBoxRef.current.scrollHeight,
+      });
+    }, 0);
+  };
+
+  const handleCancel = (todoId) => {
+    setTodos(
+      todos.map((t) => (t.id === todoId ? { ...t, canceled: true } : t))
+    );
+  };
 
   return (
     <div className='layout bg-[#555] h-screen xl:p5'>
@@ -56,37 +141,49 @@ function App() {
                 ></div>
               </div>
             </div>
-            <div className='listBox grid gap-y-2 w[calc(100%+64px)] relative -left-8 px8 hfull max-h-62 py2 overflow-y-auto'>
-              {todos.map((todo) => (
-                <div
-                  key={todo.id}
-                  className='item flex items-center h13 bg-white rounded-md relative px4 flex justify-between'
-                >
-                  <div className='absolute left-0 hfull w1 rounded-l-md bg-blue-300'></div>
-                  <div className='flex items-center gap-x-4'>
-                    <CustomCheckbox
-                      checked={todo.completed}
-                      onChange={() => {
-                        setTodos(
-                          todos.map((t) =>
-                            t.id === todo.id
-                              ? { ...t, completed: !t.completed }
-                              : t
-                          )
-                        );
-                      }}
-                    />
-                    <p
-                      className={`c-blue-300 ${
-                        todo.completed ? 'line-through' : ''
-                      }`}
+            <div
+              ref={listBoxRef}
+              className='listBox w[calc(100%+64px)] relative -left-8 px8 hfull max-h-62 py2 overflow-y-auto '
+            >
+              <div className='grid gap-y-2'>
+                {todos
+                  .filter((todo) => !todo.canceled)
+                  .map((todo) => (
+                    <div
+                      key={todo.id}
+                      className='item flex items-center h13 bg-white rounded-md relative px4 flex justify-between'
                     >
-                      {todo.text}
-                    </p>
-                  </div>
-                  <CancelSvg />
-                </div>
-              ))}
+                      <div className='absolute left-0 hfull w1 rounded-l-md bg-blue-300'></div>
+                      <div className='flex items-center gap-x-4'>
+                        <CustomCheckbox
+                          checked={todo.completed}
+                          onChange={() => {
+                            setTodos(
+                              todos.map((t) =>
+                                t.id === todo.id
+                                  ? { ...t, completed: !t.completed }
+                                  : t
+                              )
+                            );
+                          }}
+                        />
+                        <p
+                          className={`c-blue-300 ${
+                            todo.completed ? 'line-through' : ''
+                          }`}
+                        >
+                          {todo.text}
+                        </p>
+                      </div>
+                      <div
+                        onClick={() => handleCancel(todo.id)}
+                        className='cursor-pointer'
+                      >
+                        <CancelSvg />
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
             <div className='splitLine h3px bg-gray-200 wfull rounded-full '></div>
             <div className='toggle flex justify-end items-center '>
@@ -112,16 +209,22 @@ function App() {
               </label>
               <div className='flex-center gap-x-2  h13 '>
                 <input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
                   className='wfull  hfull  rounded-md pl3 focus:outline-none'
                   type='text'
+                  maxLength={30}
                 />
-                <button className='w20 hfull bg-blue-300  rounded-md'>
+                <button
+                  className='addBtn w20 hfull bg-blue-300  rounded-md'
+                  onClick={handleAddTodo}
+                >
                   <div className='text-4xl c-white  wfull hfull text-center pt1'>
                     +
                   </div>
                 </button>
               </div>
-              {/* <button>Add</button> */}
             </div>
           </div>
         </div>
