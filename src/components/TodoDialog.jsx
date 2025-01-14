@@ -23,9 +23,12 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (!isMobile) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
+      }
     }
   }, [isOpen]);
 
@@ -65,7 +68,7 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
   return (
     <div className='fixed inset-0 bg-black/50 flex items-center justify-center animate-fade-in animate-duration-150'>
       <div
-        className='todolist-dialog relative select-none wfull max-w-520px max-h-692px hfull 
+        className='todolist-dialog relative select-none wfull max-w-520px xl:max-h-692px hfull 
           bg-gradient-to-b from-purple-100 to-purple-200 pt15 px8 flex flex-col gap-y-4'
       >
         <div onClick={onClose} className='dialog-close absolute top-5 right-5 cursor-pointer'>
