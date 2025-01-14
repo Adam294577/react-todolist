@@ -146,6 +146,11 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddTodo();
+                }
+              }}
               className='wfull hfull rounded-md pl3 focus:outline-none'
               type='text'
               maxLength={30}
