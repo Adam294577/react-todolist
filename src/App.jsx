@@ -63,12 +63,9 @@ function App() {
   }, [isOpen]);
 
   useEffect(() => {
-    const completedCount = todos.filter(
-      (todo) => !todo.canceled && todo.completed
-    ).length;
+    const completedCount = todos.filter((todo) => !todo.canceled && todo.completed).length;
     const activeCount = todos.filter((todo) => !todo.canceled).length;
-    const percentage =
-      activeCount === 0 ? 0 : Math.ceil((completedCount / activeCount) * 100);
+    const percentage = activeCount === 0 ? 0 : Math.ceil((completedCount / activeCount) * 100);
     setBarRange(percentage);
   }, [todos]);
 
@@ -82,8 +79,6 @@ function App() {
       completed: false,
       createtime: new Date().toISOString(),
     };
-    console.log('newTodo', newTodo);
-
     setTodos([...todos, newTodo]);
     setInputValue('');
 
@@ -95,9 +90,16 @@ function App() {
   };
 
   const handleCancel = (todoId) => {
-    setTodos(
-      todos.map((t) => (t.id === todoId ? { ...t, canceled: true } : t))
-    );
+    setTodos(todos.map((t) => (t.id === todoId ? { ...t, canceled: true } : t)));
+  };
+
+  const sortTodos = (todos, isCompleteToEnd) => {
+    return todos.sort((a, b) => {
+      if (isCompleteToEnd && a.completed !== b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      return new Date(a.createtime) - new Date(b.createtime);
+    });
   };
 
   return (
@@ -146,7 +148,7 @@ function App() {
               className='listBox w[calc(100%+64px)] relative -left-8 px8 hfull max-h-62 py2 overflow-y-auto '
             >
               <div className='grid gap-y-2'>
-                {todos
+                {sortTodos([...todos], isChecked)
                   .filter((todo) => !todo.canceled)
                   .map((todo) => (
                     <div
@@ -160,25 +162,16 @@ function App() {
                           onChange={() => {
                             setTodos(
                               todos.map((t) =>
-                                t.id === todo.id
-                                  ? { ...t, completed: !t.completed }
-                                  : t
+                                t.id === todo.id ? { ...t, completed: !t.completed } : t
                               )
                             );
                           }}
                         />
-                        <p
-                          className={`c-blue-300 ${
-                            todo.completed ? 'line-through' : ''
-                          }`}
-                        >
+                        <p className={`c-blue-300 ${todo.completed ? 'line-through' : ''}`}>
                           {todo.text}
                         </p>
                       </div>
-                      <div
-                        onClick={() => handleCancel(todo.id)}
-                        className='cursor-pointer'
-                      >
+                      <div onClick={() => handleCancel(todo.id)} className='cursor-pointer'>
                         <CancelSvg />
                       </div>
                     </div>
@@ -187,9 +180,7 @@ function App() {
             </div>
             <div className='splitLine h3px bg-gray-200 wfull rounded-full '></div>
             <div className='toggle flex justify-end items-center '>
-              <span className='c-blue-300 text-sm mr2 mt1'>
-                Move done things to end?
-              </span>
+              <span className='c-blue-300 text-sm mr2 mt1'>Move done things to end?</span>
               <button
                 className={`toggleBtn w10 h5 rounded-full relative transition-colors duration-300 ${
                   isChecked ? 'bg-purple-300' : 'bg-white'
@@ -204,9 +195,7 @@ function App() {
               </button>
             </div>
             <div className='addBox absolute bottom-8 left-0 wfull px8'>
-              <label className='block c-gray-400 ml1 mb1 fw600'>
-                Add to list
-              </label>
+              <label className='block c-gray-400 ml1 mb1 fw600'>Add to list</label>
               <div className='flex-center gap-x-2  h13 '>
                 <input
                   ref={inputRef}
@@ -220,9 +209,7 @@ function App() {
                   className='addBtn w20 hfull bg-blue-300  rounded-md'
                   onClick={handleAddTodo}
                 >
-                  <div className='text-4xl c-white  wfull hfull text-center pt1'>
-                    +
-                  </div>
+                  <div className='text-4xl c-white  wfull hfull text-center pt1'>+</div>
                 </button>
               </div>
             </div>
