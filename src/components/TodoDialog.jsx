@@ -90,7 +90,7 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
         </div>
         <div
           ref={listBoxRef}
-          className='listBox w[calc(100%+64px)] relative -left-8 px8 hfull max-h-62 py2 overflow-y-auto'
+          className='listBox w[calc(100%+64px)] relative -left-8 px8 hfull xl:max-h-62 max-h-77 py2 overflow-y-auto'
         >
           <div className='grid gap-y-2'>
             {sortTodos([...todos], isChecked)
