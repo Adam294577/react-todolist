@@ -1,14 +1,48 @@
 import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import CustomCheckbox from './CustomCheckbox';
 import CancelSvg from './CancelSvg';
 
-function TodoDialog({ isOpen, onClose, todos, setTodos }) {
+function TodoDialog({ isOpen, onClose }) {
   const [isChecked, setIsChecked] = useState(false);
   const [barRange, setBarRange] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const listBoxRef = useRef(null);
   const inputRef = useRef(null);
+  const queryClient = useQueryClient();
+
+  // 獲取 todos
+  const { data: todos = [] } = useQuery({
+    queryKey: ['todos'],
+    queryFn: () => fetch('http://localhost:3000/todos').then((res) => res.json()),
+  });
+
+  // 添加 todo
+  const addTodoMutation = useMutation({
+    mutationFn: (newTodo) =>
+      fetch('http://localhost:3000/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTodo),
+      }).then((res) => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['todos']);
+    },
+  });
+
+  // 更新 todo
+  const updateTodoMutation = useMutation({
+    mutationFn: (todo) =>
+      fetch(`http://localhost:3000/todos/${todo.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(todo),
+      }).then((res) => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['todos']);
+    },
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -36,13 +70,13 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
     if (!inputValue.trim()) return;
 
     const newTodo = {
-      id: todos.length + 1,
       text: inputValue,
       canceled: false,
       completed: false,
       createtime: new Date().toISOString(),
     };
-    setTodos([...todos, newTodo]);
+
+    addTodoMutation.mutate(newTodo);
     setInputValue('');
 
     setTimeout(() => {
@@ -53,7 +87,14 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
   };
 
   const handleCancel = (todoId) => {
-    setTodos(todos.map((t) => (t.id === todoId ? { ...t, canceled: true } : t)));
+    const todo = todos.find((t) => t.id === todoId);
+    if (todo) {
+      updateTodoMutation.mutate({ ...todo, canceled: true });
+    }
+  };
+
+  const handleToggleComplete = (todo) => {
+    updateTodoMutation.mutate({ ...todo, completed: !todo.completed });
   };
 
   const sortTodos = (todos, isCompleteToEnd) => {
@@ -104,13 +145,7 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
                   <div className='flex items-center gap-x-4'>
                     <CustomCheckbox
                       checked={todo.completed}
-                      onChange={() => {
-                        setTodos(
-                          todos.map((t) =>
-                            t.id === todo.id ? { ...t, completed: !t.completed } : t
-                          )
-                        );
-                      }}
+                      onChange={() => handleToggleComplete(todo)}
                     />
                     <p className={`c-blue-300 ${todo.completed ? 'line-through' : ''}`}>
                       {todo.text}
@@ -168,16 +203,6 @@ function TodoDialog({ isOpen, onClose, todos, setTodos }) {
 TodoDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  todos: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number,
-      text: PropTypes.string,
-      canceled: PropTypes.bool,
-      completed: PropTypes.bool,
-      createtime: PropTypes.string,
-    })
-  ).isRequired,
-  setTodos: PropTypes.func.isRequired,
 };
 
 export default TodoDialog;
